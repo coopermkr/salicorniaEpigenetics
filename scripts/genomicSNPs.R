@@ -15,6 +15,7 @@ library(ggpubr)
 library(tidyr)
 library(hierfstat)
 library(adegenet)
+library(PopGenome)
 
 # Load in VCF
 lpvcf <- read.vcfR("2.vcf/sdep.epi.snp.flt.vcf")
@@ -100,5 +101,16 @@ geom_segment(aes(x = 0.216, xend = 0.,
              linewidth = 0.1, linetype = "dashed")
 
 
-# Calculate inbreeding coefficients
+#### Window Diversity
+# Load VCF object
+sdgvcf <- read.vcfR("2.vcf/sdg.filt.vcf")
+
+popList <- read.delim(file = "2.vcf/popmap.txt", header = FALSE) |>
+  rename(id = V1,
+         pop = V2)
+
+# Generate 
+
+
+
 

@@ -28,6 +28,8 @@ methDev <- meth |>
          # Filter out nonvariable regions
          sd > 0)
 
+#write_tsv(methDev, file = "5.diversity/smpDiversity.tsv")
+
 # Graph deviations
 methVio <- methDev |>
   # Filter out super high standard devs
