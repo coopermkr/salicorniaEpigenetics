@@ -53,15 +53,22 @@ sigtest |>
 #### Fst using specified populations
 # Load in data from python scripts
 winFst <- read_csv("5.fst/snp.fst.csv") |>
+  rename(chrom = scaffold,
+         window = start) |>
   # Select Fst columns and major chromosomes
-  select(scaffold, start, sites, Fst_ef_es, Fst_ef_et, Fst_ef_ew, Fst_es_et, Fst_es_ew, Fst_et_ew) |>
-  filter(str_starts(scaffold, "^group")) |>
+  select(chrom, window, sites, Fst_ef_es, Fst_ef_et, Fst_ef_ew, Fst_es_et, Fst_es_ew, Fst_et_ew) |>
+  filter(str_starts(chrom, "^group")) |>
   # Get rid of all NAs so we only have windows with data for all four pairwise comparisons
   na.omit() |>
   rowwise() |>
   # Average the four Fsts as a method of detecting outliers
   mutate(Fst_mean = mean(c_across(starts_with("Fst")))) |>
   arrange(desc(Fst_mean))
+
+# Write out mean Fst file
+winFst |>
+  select(chrom, window, sites, Fst_mean) |>
+  write_csv("5.fst/meanfst.csv")
 
 # plot mean Fst values
 ggplot(data = winFst,
@@ -72,29 +79,30 @@ ggplot(data = winFst,
 top <- nrow(winFst)*0.001
 outFst <- winFst[1:top,]
 
+write_csv(outFst, file = "5.fst/outlierFst.csv")
+
 ## Plot Fst
 # Calculate chromosome offsets for plotting
 sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt", 
                     delim = " ", col_names = c("chrom", "len")) |>
   filter(str_starts(chrom, "group")) |>
-  mutate(offset = cumsum(lag(len, default = 0))) |>
-  rename(scaffold = chrom)
+  mutate(offset = cumsum(lag(len, default = 0)))
 
 manFst <- winFst |>
   merge(sizes) |>
-  mutate(xcoord = start + offset)
+  mutate(xcoord = window + offset)
 
 # Plot
 plotFst <- ggplot(data = manFst,
                  mapping = aes(x = xcoord,
                                   y = Fst_mean,
-                                  color = scaffold)) +
+                                  color = chrom)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
   labs(title = "Mean SNP-wise Fst",
        x = "10kb Window Position",
        y = "Mean of Pairwise Fst") +
-  scale_x_continuous(label = unique(manFst$scaffold),
+  scale_x_continuous(label = unique(manFst$chrom),
                      breaks = unique(manFst$offset)) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),

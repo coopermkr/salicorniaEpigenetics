@@ -64,7 +64,7 @@ kw |>
   summarize(nsig = sum(significance == TRUE),
             total = n(),
             prop = nsig / total)
-# 0.001% of windows are significant- use as a cutoff for Fst
+# 0.1% of windows are significant- use as a cutoff for Fst
 
 # Calculate chromosome offsets for plotting
 sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt", 
