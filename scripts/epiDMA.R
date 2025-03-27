@@ -58,10 +58,13 @@ kw <- kw |>
   filter(!is.na(p)) |>
   mutate(significance = -log10(p) > 1.3)
 
+# Sum number of significant windows
 kw |>
-  filter(significance == TRUE) |>
-  group_by(chrom) |>
-  summarize(nsig = n())
+  #group_by(chrom) |>
+  summarize(nsig = sum(significance == TRUE),
+            total = n(),
+            prop = nsig / total)
+# 0.001% of windows are significant- use as a cutoff for Fst
 
 # Calculate chromosome offsets for plotting
 sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt", 
@@ -73,7 +76,7 @@ man <- kw |>
   merge(sizes) |>
   mutate(xcoord = window + offset)
 
-# Plot genes by position and pvalue to make a manhattan plot
+# Plot windows by position and pvalue to make a manhattan plot
 manhattan <- ggplot(data = man,
                     mapping = aes(x = xcoord,
                                   y = -log10(p),
