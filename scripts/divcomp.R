@@ -36,7 +36,7 @@ div |>
   filter(methSD > 0) |>
   ggplot(mapping = aes(x = methSD,
                        y = TajimaD, color = pop)) +
-  #scale_x_continuous(trans = 'log10') +
+  scale_x_continuous(trans = 'log10') +
   geom_point() +
   facet_wrap(vars(pop)) +
   theme_classic()

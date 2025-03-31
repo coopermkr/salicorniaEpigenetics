@@ -8,7 +8,7 @@
 library(tidyverse)
 
 # Load genetic and methylation windows to merge
-winFst <- read_csv("5.fst/meanfst.csv")
+meanFst <- read_csv("5.fst/meanfst.csv")
 
 kw <- read_csv(file = "5.dma/kw.csv")
 
@@ -16,13 +16,16 @@ kw <- read_csv(file = "5.dma/kw.csv")
 outcombo <- kw |>
   filter(!is.na(p)) |>
   mutate(significance = -log10(p) > 1.3) |>
-  merge(winFst)
+  merge(meanFst)
 
 # Plot p vs. Fst
 ggplot(data = outcombo,
-       mapping = aes(x = Fst_mean,
+       mapping = aes(x = ZFst_mean,
                      y = -log10(p))) +
   geom_point() +
+  geom_vline(xintercept = 3*sd(outcombo$ZFst_mean)) +
+  geom_vline(xintercept = -3*sd(outcombo$ZFst_mean)) +
+  geom_hline(yintercept = 1.3) +
   theme_classic()
 
 

@@ -8,6 +8,7 @@
 library(pcadapt)
 library(qvalue)
 library(tidyverse)
+library(OutFLANK)
 
 # Load data
 bed <- read.pcadapt("4.filter/snp.miss.bed", type = "bed", type.out = "matrix")
@@ -59,25 +60,37 @@ winFst <- read_csv("5.fst/snp.fst.csv") |>
   select(chrom, window, sites, Fst_ef_es, Fst_ef_et, Fst_ef_ew, Fst_es_et, Fst_es_ew, Fst_et_ew) |>
   filter(str_starts(chrom, "^group")) |>
   # Get rid of all NAs so we only have windows with data for all four pairwise comparisons
-  na.omit() |>
+  na.omit()
+
+# Calculate comparison mean over all sites to Z-transform
+meanFst <- winFst |>
+  mutate(Zef_es = Fst_ef_es - mean(Fst_ef_es),
+         Zef_et = Fst_ef_et - mean(Fst_ef_et),
+         Zef_ew = Fst_ef_ew - mean(Fst_ef_ew),
+         Zes_et = Fst_es_et - mean(Fst_es_et),
+         Zes_ew = Fst_es_ew - mean(Fst_es_ew),
+         Zet_ew = Fst_et_ew - mean(Fst_et_ew)) |>
   rowwise() |>
   # Average the four Fsts as a method of detecting outliers
-  mutate(Fst_mean = mean(c_across(starts_with("Fst")))) |>
-  arrange(desc(Fst_mean))
+  mutate(ZFst_mean = mean(c_across(starts_with("Z")))) |>
+  arrange(desc(ZFst_mean))
 
 # Write out mean Fst file
-winFst |>
-  select(chrom, window, sites, Fst_mean) |>
+meanFst |>
+  select(chrom, window, sites, ZFst_mean) |>
   write_csv("5.fst/meanfst.csv")
 
-# plot mean Fst values
-ggplot(data = winFst,
-       mapping = aes(x = Fst_mean)) +
-  geom_histogram()
+meanFst <- read_csv("5.fst/meanfst.csv")
 
-# Pull out top 0.1% of Fst value windows
-top <- nrow(winFst)*0.001
-outFst <- winFst[1:top,]
+# plot mean Fst values
+ggplot(data = meanFst,
+       mapping = aes(x = ZFst_mean)) +
+  geom_histogram(binwidth = 0.01) +
+  geom_vline(xintercept = 3*sd(meanFst$ZFst_mean))
+
+# Pull out top 1% of Fst value windows
+outFst <- meanFst |>
+  filter(ZFst_mean >= 3*sd(meanFst$ZFst_mean))
 
 write_csv(outFst, file = "5.fst/outlierFst.csv")
 
@@ -88,14 +101,14 @@ sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt",
   filter(str_starts(chrom, "group")) |>
   mutate(offset = cumsum(lag(len, default = 0)))
 
-manFst <- winFst |>
+manFst <- meanFst |>
   merge(sizes) |>
   mutate(xcoord = window + offset)
 
 # Plot
 plotFst <- ggplot(data = manFst,
                  mapping = aes(x = xcoord,
-                                  y = Fst_mean,
+                                  y = ZFst_mean,
                                   color = chrom)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
@@ -116,4 +129,10 @@ png("manhattanFst.png", width = 800, height = 600)
 plotFst
 dev.off()
 
+#### vcftools derived Fst
+fst <- read_tsv("5.fst/winfst.weir.fst") |>
+  filter(WEIGHTED_FST >= 0)
+
+ggplot(data = fst, mapping = aes(x = WEIGHTED_FST)) +
+  geom_histogram()
 
