@@ -14,7 +14,10 @@ library(OutFLANK)
 bed <- read.pcadapt("4.filter/snp.miss.bed", type = "bed", type.out = "matrix")
 
 # Set population info
-samples <- c("ef10","ef11","ef12","ef13","ef15","ef1","ef3","ef4","ef5","ef6","ef8","ef9","es10","es11","es12","es13","es15","es1","es2","es3","es4","es5","es7","es9","et10","et11","et13","et14","et15","et1","et2","et3","et4","et7","et8","et9","ew10","ew11","ew12","ew13","ew1","ew2","ew3","ew4","ew6","ew7","ew8","ew9")
+samples <- c("ef10","ef11","ef12","ef13","ef15","ef1","ef3","ef4","ef5","ef6","ef8","ef9",
+             "es10","es11","es12","es13","es15","es1","es2","es3","es4","es5","es7","es9",
+             "et10","et11","et13","et14","et15","et1","et2","et3","et4","et7","et8","et9",
+             "ew10","ew11","ew12","ew13","ew1","ew2","ew3","ew4","ew6","ew7","ew8","ew9")
 
 pop <- str_sub(samples, start = 1, end = 2) %>% 
   str_replace_all(c("ef" = "Folgers Marsh",  "es" = "Savin Hill", "et" = "The Creeks", "ew" = "Waquoit Bay"))
@@ -53,7 +56,7 @@ sigtest |>
 
 #### Fst using specified populations
 # Load in data from python scripts
-winFst <- read_csv("5.fst/snp.fst.csv") |>
+winFst <- read_csv("6.fst/snp.fst.csv") |>
   rename(chrom = scaffold,
          window = start) |>
   # Select Fst columns and major chromosomes
@@ -78,9 +81,10 @@ meanFst <- winFst |>
 # Write out mean Fst file
 meanFst |>
   select(chrom, window, sites, ZFst_mean) |>
-  write_csv("5.fst/meanfst.csv")
+  write_csv("6.fst/meanfst.csv")
 
-meanFst <- read_csv("5.fst/meanfst.csv")
+meanFst <- read_csv("6.fst/meanfst.csv") |>
+  arrange(chrom)
 
 # plot mean Fst values
 ggplot(data = meanFst,
@@ -98,25 +102,31 @@ write_csv(outFst, file = "5.fst/outlierFst.csv")
 # Calculate chromosome offsets for plotting
 sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt", 
                     delim = " ", col_names = c("chrom", "len")) |>
-  filter(str_starts(chrom, "group")) |>
+  filter(str_starts(chrom, "Sdep")) |>
+  arrange(chrom) |>
   mutate(offset = cumsum(lag(len, default = 0)))
 
 manFst <- meanFst |>
   merge(sizes) |>
-  mutate(xcoord = window + offset)
+  mutate(xcoord = window + offset,
+         significance = ZFst_mean > 2.5*sd(manFst$ZFst_mean) | 
+           ZFst_mean < -2.5*sd(manFst$ZFst_mean))
 
 # Plot
 plotFst <- ggplot(data = manFst,
                  mapping = aes(x = xcoord,
-                                  y = ZFst_mean,
-                                  color = chrom)) +
+                               y = ZFst_mean,
+                               color = chrom,
+                               shape = significance)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
   labs(title = "Mean SNP-wise Fst",
        x = "10kb Window Position",
-       y = "Mean of Pairwise Fst") +
+       y = "Z-Transformed Mean of Pairwise Fst") +
   scale_x_continuous(label = unique(manFst$chrom),
                      breaks = unique(manFst$offset)) +
+  geom_hline(yintercept = 2.5*sd(manFst$ZFst_mean), linetype = "dashed") +
+  geom_hline(yintercept = -2.5*sd(manFst$ZFst_mean), linetype = "dashed") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         legend.position = "none",
@@ -125,12 +135,12 @@ plotFst <- ggplot(data = manFst,
         axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5))
 
 
-png("manhattanFst.png", width = 800, height = 600)
+png("6.fst/manhattanFst.png", width = 600, height = 400)
 plotFst
 dev.off()
 
 #### vcftools derived Fst
-fst <- read_tsv("5.fst/winfst.weir.fst") |>
+fst <- read_tsv("6.fst/winfst.weir.fst") |>
   filter(WEIGHTED_FST >= 0)
 
 ggplot(data = fst, mapping = aes(x = WEIGHTED_FST)) +

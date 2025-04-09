@@ -13,8 +13,8 @@ library(tidyverse)
 #### Process output files
 divProc <- function(pop){
   print(pop)
-  dpath <- paste("5.diversity/", pop, ".pop.div.Tajima.D", sep = "")
-  pipath <- paste("5.diversity/", pop, ".pop.div.windowed.pi", sep = "")
+  dpath <- paste("6.diversity/", pop, ".pop.div.Tajima.D", sep = "")
+  pipath <- paste("6.diversity/", pop, ".pop.div.windowed.pi", sep = "")
   
   d <- read_tsv(dpath) |>
     mutate(BIN_START = BIN_START + 1)
@@ -47,8 +47,8 @@ divfilt <- merge(divPops, div, by.x = c("CHROM", "BIN_START")) |>
 # Make sure every window has 4 populations
 unique(divfilt$npops)
 
-write_tsv(divfilt, file = "5.diversity/snpDiversity.tsv")
-divfilt <- read_tsv("5.diversity/snpDiversity.tsv")
+write_tsv(divfilt, file = "6.diversity/snpDiversity.tsv")
+divfilt <- read_tsv("6.diversity/snpDiversity.tsv")
 
 ##### Test differences between populations
 library(emmeans)
@@ -129,7 +129,7 @@ piBox <- divfilt |>
   guides (size = "none") +
   theme_classic(base_size = 16)
 
-png("5.diversity/piBox.png", width = 600, height = 800)
+png("6.diversity/piBox.png", width = 600, height = 800)
 piBox
 dev.off()
 

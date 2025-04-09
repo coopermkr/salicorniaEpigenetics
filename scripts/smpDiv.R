@@ -16,7 +16,7 @@ library(data.table)
 # Iterate over chromosomes and windows until done
 
 # Start with the already calculate window densities:
-meth <- read_csv("5.dma/methdens.csv")
+meth <- read_csv("6.diversity/methdens.csv")
 
 # Calculate population-level standard deviation as a measure of methylation diversity for each window
 methDev <- meth |>
@@ -24,11 +24,9 @@ methDev <- meth |>
   group_by(chrom, window, pop) |>
   summarize(mean = mean(methper),
             sd = sd(methper)) |>
-  filter(!is.na(sd),
-         # Filter out nonvariable regions
-         sd > 0)
+  filter(!is.na(sd)) # Keep non-variable regions
 
-#write_tsv(methDev, file = "5.diversity/smpDiversity.tsv")
+write_tsv(methDev, file = "6.diversity/smpDiversity.tsv")
 
 # Graph deviations
 methVio <- methDev |>
@@ -76,11 +74,11 @@ methBox <- methDev |>
                      values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
   labs(title = "Methylation Diversity",
        x = "Population",
-       y = "Standard Deviation by 1000bp Window") +
+       y = "Standard Deviation by 10,000bp Window") +
   guides (size = "none") +
   theme_classic(base_size = 16)
 
-png("methBox.png", width = 600, height = 800)
+png("6.diversity/methBox.png", width = 600, height = 800)
 methBox
 dev.off()
 

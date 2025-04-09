@@ -51,7 +51,8 @@ kwtest <- function(grp) {
 
 kw <- map(.x = unique(methdens$grp), .f = kwtest) |> list_rbind()
 
-kw <- read_csv(file = "5.dma/kw.csv")
+kw <- read_csv(file = "6.dma/kw.csv") |>
+  arrange(chrom)
 
 # Filter out NAs
 kw <- kw |>
@@ -69,12 +70,14 @@ kw |>
 # Calculate chromosome offsets for plotting
 sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt", 
                     delim = " ", col_names = c("chrom", "len")) |>
-  filter(str_starts(chrom, "group")) |>
+  filter(str_starts(chrom, "Sdep")) |>
+  arrange(chrom) |>
   mutate(offset = cumsum(lag(len, default = 0)))
 
 man <- kw |>
   merge(sizes) |>
-  mutate(xcoord = window + offset)
+  mutate(xcoord = window + offset,
+         significance = p < 0.05)
 
 # Plot windows by position and pvalue to make a manhattan plot
 manhattan <- ggplot(data = man,
@@ -83,7 +86,7 @@ manhattan <- ggplot(data = man,
                                   color = chrom,
                                   shape = significance)) +
   geom_point(size = 3) +
-  geom_hline(yintercept = 2, linetype = "dashed") +
+  geom_hline(yintercept = 1.3, linetype = "dashed") +
   theme_classic(base_size = 15) +
   labs(title = "Kruskal Wallis Test of Population Significance",
        x = "10kb Window Position",
@@ -98,7 +101,7 @@ manhattan <- ggplot(data = man,
         axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5))
 
 
-png("manhattan.png", width = 600, height = 400)
+png("6.dma/manhattan.png", width = 600, height = 400)
 manhattan
 dev.off()
 
@@ -132,4 +135,4 @@ sigtrans <- function(chr, win) {
 }
 
 transcripts <- map2(.x = sig$chrom, .y = sig$window, .f = sigtrans) |> list_rbind()
-write.csv(transcripts, file = "5.dma/significantTranscripts.csv")
+write.csv(transcripts, file = "7.transcripts/significantTranscripts.csv")
