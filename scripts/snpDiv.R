@@ -123,7 +123,7 @@ piBox <- divfilt |>
   scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
                                 "The Creeks Preserve", "Waquoit Bay"),
                      values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
-  labs(title = "Pi Diversity in 10kb Windows",
+  labs(title = "Pi Diversity over 10kb Windows",
        x = "Population",
        y = "Pi over 10kb window") +
   guides (size = "none") +

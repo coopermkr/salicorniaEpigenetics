@@ -28,7 +28,7 @@ vol <- ggplot(data = outcombo,
   geom_vline(xintercept = -2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
   theme_classic() +
-  labs(title = "Window-by-window selection scores",
+  labs(title = "Window-by-window Divergence",
        x = "Genetic Divergence (Z-transformed Mean Fst)",
        y = "Divergence in Methylation Density (-log10(p))") +
   guides (size = "none") +

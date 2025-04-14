@@ -53,7 +53,7 @@ piMeth <- div |>
     facet_wrap(vars(pop)) +
     theme_classic() +
     labs(title = "Window-by-window diversity comparison",
-       x = "Methylation diversity (standard deviation over 10kb window)",
+       x = "Methylation diversity (standard deviation of density over 10kb window)",
        y = "Genetic diversity (Pi over 10kb window)") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),

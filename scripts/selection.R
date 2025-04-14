@@ -1,5 +1,5 @@
 #'''''''''''''''''''''''''''''''''''''''''''
-#' SNP Selection Scan
+#' SNP Divergence
 #' @date 2025-03-25
 #' @author Cooper Kimball-Rhines- from Brook's file
 #'''''''''''''''''''''''''''''''''''''''''''
@@ -61,7 +61,7 @@ winFst <- read_csv("6.fst/snp.fst.csv") |>
          window = start) |>
   # Select Fst columns and major chromosomes
   select(chrom, window, sites, Fst_ef_es, Fst_ef_et, Fst_ef_ew, Fst_es_et, Fst_es_ew, Fst_et_ew) |>
-  filter(str_starts(chrom, "^group")) |>
+  filter(str_starts(chrom, "^Sdep")) |>
   # Get rid of all NAs so we only have windows with data for all four pairwise comparisons
   na.omit()
 
@@ -96,7 +96,7 @@ ggplot(data = meanFst,
 outFst <- meanFst |>
   filter(ZFst_mean >= 3*sd(meanFst$ZFst_mean))
 
-write_csv(outFst, file = "5.fst/outlierFst.csv")
+write_csv(outFst, file = "6.fst/outlierFst.csv")
 
 ## Plot Fst
 # Calculate chromosome offsets for plotting
@@ -109,18 +109,18 @@ sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt",
 manFst <- meanFst |>
   merge(sizes) |>
   mutate(xcoord = window + offset,
-         significance = ZFst_mean > 2.5*sd(manFst$ZFst_mean) | 
-           ZFst_mean < -2.5*sd(manFst$ZFst_mean))
+         significance = ZFst_mean > 2.5*sd(meanFst$ZFst_mean) | 
+           ZFst_mean < -2.5*sd(meanFst$ZFst_mean))
 
 # Plot
 plotFst <- ggplot(data = manFst,
                  mapping = aes(x = xcoord,
                                y = ZFst_mean,
-                               color = chrom,
+                               color = as.factor(chrom),
                                shape = significance)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
-  labs(title = "Mean SNP-wise Fst",
+  labs(title = "Genetic Divergence by Population",
        x = "10kb Window Position",
        y = "Z-Transformed Mean of Pairwise Fst") +
   scale_x_continuous(label = unique(manFst$chrom),
@@ -132,7 +132,8 @@ plotFst <- ggplot(data = manFst,
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5))
+        axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5)) +
+  scale_colour_manual(values = rep(c("steelblue", "lightblue"), 9))
 
 
 png("6.fst/manhattanFst.png", width = 600, height = 400)

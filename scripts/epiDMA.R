@@ -1,5 +1,5 @@
 #''''''''''''''''''''''''''''''''''''''''''''''''
-#' Differential Methylation Analysis
+#' Methylation Divergence Analysis
 #' @date 2025-03-05
 #' @author Cooper Kimball-Rhines
 #''''''''''''''''''''''''''''''''''''''''''''''''
@@ -33,7 +33,7 @@ winper <- winpop |>
          methtrans = (methper*(wincov-1)+0.5)/wincov)
 
 #### Test for the effect of population on methylation
-methdens <- read_csv(file = "5.dma/methdens.csv")
+methdens <- read_csv(file = "6.dma/methdens.csv")
 
 methdens <- methdens |>
   mutate(grp = paste(chrom, window, sep = "_"))
@@ -88,9 +88,9 @@ manhattan <- ggplot(data = man,
   geom_point(size = 3) +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
   theme_classic(base_size = 15) +
-  labs(title = "Kruskal Wallis Test of Population Significance",
-       x = "10kb Window Position",
-       y = "-log10(p)") +
+  labs(title = "Methylation Divergence by Population",
+       x = "10kb Methylation Window Position",
+       y = "Kruskal Wallis of Methylation Density (-log10(p))") +
   scale_x_continuous(label = unique(man$chrom),
                      breaks = unique(man$offset)) +
   theme(plot.title = element_text(hjust = 0.5),
@@ -98,10 +98,12 @@ manhattan <- ggplot(data = man,
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5))
+        axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5)) +
+  scale_colour_manual(values = rep(c("steelblue", "lightblue"), 9))
 
 
-png("6.dma/manhattan.png", width = 600, height = 400)
+
+png("6.dma/manhattanMeth.png", width = 600, height = 400)
 manhattan
 dev.off()
 
