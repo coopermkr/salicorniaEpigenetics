@@ -1,5 +1,5 @@
 #'''''''''''''''''''''''''''''''''''''''''''
-#' Selection Cross Comparison
+#' Genetic/Methylation Divergence Cross Comparison
 #' @date 2025-03-27
 #' @author Cooper Kimball-Rhines
 #'''''''''''''''''''''''''''''''''''''''''''
@@ -9,9 +9,11 @@ library(tidyverse)
 library(data.table)
 
 # Load genetic and methylation windows to merge
-meanFst <- read_csv("6.fst/meanfst.csv")
+meanFst <- read_csv("6.fst/meanfst.csv") |>
+  mutate(type = "snp")
 
-kw <- read_csv(file = "6.dma/kw.csv")
+kw <- read_csv(file = "6.dma/kw.csv") |>
+  mutate(type = "smp")
 
 # Filter out NAs and merge with SNP set
 outcombo <- kw |>
@@ -48,18 +50,18 @@ dev.off()
 methSig <- kw |>
   arrange(chrom) |>
   filter(p < 0.05) |>
-  mutate(significance = "DMR") |>
-  select(chrom, window, significance)
+  mutate(type = "DMR") |>
+  select(chrom, window, type)
 
 lowdiv <- meanFst |>
   filter(ZFst_mean < -2.5*sd(meanFst$ZFst_mean)) |>
-  mutate(significance = "Low Genetic Divergence") |>
-  select(chrom, window, significance)
+  mutate(type = "Low Genetic Divergence") |>
+  select(chrom, window, type)
 
 hidiv <- meanFst |>
   filter(ZFst_mean > 2.5*sd(meanFst$ZFst_mean)) |>
-  mutate(significance = "High Genetic Divergence") |>
-  select(chrom, window, significance)
+  mutate(type = "High Genetic Divergence") |>
+  select(chrom, window, type)
 
 # Join the significant types together
 sigTrans <- rbind(methSig, lowdiv, hidiv)
@@ -80,7 +82,7 @@ genes <- fread("7.transcripts/gene.features.bed") |>
          bsizes = V11,
          bstart = V12)
 
-siganno <- function(chr, win, sig) {
+siganno <- function(chr, win, type) {
   winstart <- win - 10000
   winend <- win + 20000
   
@@ -88,27 +90,41 @@ siganno <- function(chr, win, sig) {
     filter(str_starts(chrom, chr),
            start > win,
            start < winend) |>
-    mutate(sigType = sig)
+    mutate(divType = type)
 }
 
-transcripts <- pmap(.l = list(sigTrans$chrom, sigTrans$window, sigTrans$significance), .f = siganno) |> list_rbind()
+
+sigTranscripts <- pmap(.l = list(sigTrans$chrom, sigTrans$window, sigTrans$type), .f = siganno) |> list_rbind()
 
 # Write out list for supp mat table
-write_tsv(transcripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
+write_tsv(sigTranscripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
 
 # create list of background genes for GO analysis
-gen <- transcripts
-  #filter(sigType != "DMR")
+geneWindows <- pmap(.l = list(meanFst$chrom, meanFst$window, meanFst$type), .f = siganno) |> list_rbind()
+methWindows <- pmap(.l = list(kw$chrom, kw$window, kw$type), .f = siganno) |> list_rbind()
 
-back <- data.frame(gene = genes$name) |>
-  filter(!gene %in% gen$name)
+# Join the lists and filter out the significant genes and duplicates
+back <- rbind(geneWindows, methWindows) |>
+  # Mark duplicated genes-- these appear in both SNP and SMP datasets
+  mutate(dup = duplicated(name)) |>
+  # distinct() only keeps the first row, so we need to arrange to make sure dup will show TRUE
+  arrange(chrom, start, desc(dup)) |>
+  # Filter out significant genes
+  group_by(chrom) |>
+  filter(!start %in% sigTranscripts$start) |>
+  # Filter out one of each duplicate
+  distinct(start, .keep_all = TRUE) |>
+  ungroup()
 
-write_tsv(back, file = "8.go/1background_genes.sb")
+
+write_tsv(back, file = "8.go/background.txt")
 
 # remove duplicate hits by start position- sometimes the same gene can be recorded multiple times based on annotation rounds
-goi <- gen |>
-  filter(!duplicated(start)) |>
+goi <- sigTranscripts |>
+  group_by(chrom) |>
+  distinct(start, .keep_all = TRUE) |>
+  ungroup() |>
   select(name) |>
   rename(gene = name)
 
-write_tsv(goi, file = "8.go/2genes_of_interest.sb")
+write_tsv(goi, file = "8.go/goi.txt")
