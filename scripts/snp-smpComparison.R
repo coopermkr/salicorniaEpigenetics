@@ -97,7 +97,7 @@ siganno <- function(chr, win, type) {
 sigTranscripts <- pmap(.l = list(sigTrans$chrom, sigTrans$window, sigTrans$type), .f = siganno) |> list_rbind()
 
 # Write out list for supp mat table
-write_tsv(sigTranscripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
+#write_tsv(sigTranscripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
 
 # create list of background genes for GO analysis
 geneWindows <- pmap(.l = list(meanFst$chrom, meanFst$window, meanFst$type), .f = siganno) |> list_rbind()
@@ -114,10 +114,12 @@ back <- rbind(geneWindows, methWindows) |>
   filter(!start %in% sigTranscripts$start) |>
   # Filter out one of each duplicate
   distinct(start, .keep_all = TRUE) |>
-  ungroup()
+  ungroup() |>
+  select(name) |>
+  rename(gene = name)
 
 
-write_tsv(back, file = "8.go/background.txt")
+write_tsv(back, file = "8.go/background.txt", col_names = FALSE)
 
 # remove duplicate hits by start position- sometimes the same gene can be recorded multiple times based on annotation rounds
 goi <- sigTranscripts |>
@@ -127,4 +129,4 @@ goi <- sigTranscripts |>
   select(name) |>
   rename(gene = name)
 
-write_tsv(goi, file = "8.go/goi.txt")
+write_tsv(goi, file = "8.go/goi.txt", col_names = FALSE)
