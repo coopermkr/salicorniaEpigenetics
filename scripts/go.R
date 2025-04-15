@@ -51,7 +51,8 @@ fetest <- function(prot, divergent, background) {
 fres <- pmap(.l = both, .f = fetest) |> list_rbind() |>
   remove_rownames() |>
   arrange(p) |>
-  mutate(padj = p.adjust(p, method = "BH"))
+  mutate(pfdr = p.adjust(p, method = "BH"),
+         pbon = p.adjust(p, method = "bonferroni"))
 
 write_tsv(fres, "8.go/FEtest.tsv")
 
