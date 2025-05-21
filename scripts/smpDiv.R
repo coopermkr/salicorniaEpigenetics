@@ -24,9 +24,10 @@ methDev <- meth |>
   group_by(chrom, window, pop) |>
   summarize(mean = mean(methper),
             sd = sd(methper)) |>
-  filter(!is.na(sd)) # Keep non-variable regions
+  mutate(sd = replace_na(sd, 0))
 
 write_tsv(methDev, file = "6.diversity/smpDiversity.tsv")
+methDev <- read_tsv("6.diversity/smpDiversity.tsv")
 
 # Graph deviations
 methVio <- methDev |>
@@ -87,25 +88,42 @@ library(performance)
 library(emmeans)
 library(glmmTMB)
 library(DHARMa)
+library(broom)
+library(broom.mixed)
 
-kruskal.test(sd ~ pop, data = methDev)
-# The populations are technically different
+# How many windows?
+methDev |>
+  select(chrom, window, pop, sd) |>
+  pivot_wider(names_from = pop,
+              values_from = sd) |>
+  nrow()
 
-# Make a model to do emmeans on
-methlm <- lm(data = methDev,
-              sd ~ pop)
+# Chart the distribution
+methDev |>
+  #filter(sd > 0) |>
+  ggplot(mapping = aes(x = sd)) +
+  geom_histogram() +
+  facet_wrap(vars(pop))
 
-r2(methlm)
-check_model(methlm)
-# This clearly needs a glm
+# Summarize methylation Diversity
+methDev |>
+  #filter(sd > 0) |>
+  group_by(pop) |>
+  summarize(m = mean(sd),
+            max = max(sd),
+            min = min(sd),
+            sev = sd(sd)/sqrt(n()))
 
-# Make a gamma model
-methglm <- glm(data = methDev,
-               sd ~ pop,
-               family = Gamma)
+# Make a gamma model without zeros
+methglm <- methDev |>
+  filter(sd > 0) %>%
+  glm(data = .,
+      sd ~ pop,
+      family = Gamma)
 
 #check_model(methglm) # Looks lovely
 check_posterior_predictions(methglm)
+broom::tidy(methglm)
 
 # Contrast populations with emmeans
 methEM <- emmeans(methglm, specs = ~pop) |>
@@ -117,3 +135,24 @@ methEM |> plot() +
 # Basically The Creeks are very different from all the other populations
 # I tested this with and without zeros
 # But I'm not convinced this difference is actually relevant
+
+# Make a gamma model with zeros
+methzglm <- methDev %>%
+  glmmTMB(data = .,
+          sd ~ pop, 
+          family=ziGamma(link="log"), 
+          ziformula=~1)
+
+check_posterior_predictions(methzglm)
+
+# Coefficients
+broom.mixed::tidy(methzglm, conf.int = TRUE)
+
+# Contrast populations with emmeans
+methEM <- emmeans(methzglm, specs = ~pop) |>
+  contrast(method = "pairwise") |>
+  confint()
+
+methEM |> plot() +
+  geom_vline(xintercept = 0, color = 'red', lty = 2)
+

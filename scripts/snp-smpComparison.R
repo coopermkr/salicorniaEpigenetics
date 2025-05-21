@@ -9,15 +9,12 @@ library(tidyverse)
 library(data.table)
 
 # Load genetic and methylation windows to merge
-meanFst <- read_csv("6.fst/meanfst.csv") |>
-  mutate(type = "snp")
+meanFst <- read_csv("6.fst/meanfst.csv")
 
-kw <- read_csv(file = "6.dma/kw.csv") |>
-  mutate(type = "smp")
+kw <- read_csv(file = "6.dma/kw.csv")
 
 # Filter out NAs and merge with SNP set
 outcombo <- kw |>
-  filter(!is.na(p)) |>
   mutate(significance = -log10(p) > 1.3) |>
   merge(meanFst)
 
@@ -97,7 +94,7 @@ siganno <- function(chr, win, type) {
 sigTranscripts <- pmap(.l = list(sigTrans$chrom, sigTrans$window, sigTrans$type), .f = siganno) |> list_rbind()
 
 # Write out list for supp mat table
-#write_tsv(sigTranscripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
+write_tsv(sigTranscripts, file = "7.transcripts/significantTranscripts.tsv", col_names = FALSE)
 
 # create list of background genes for GO analysis
 geneWindows <- pmap(.l = list(meanFst$chrom, meanFst$window, meanFst$type), .f = siganno) |> list_rbind()
@@ -130,3 +127,43 @@ goi <- sigTranscripts |>
   rename(gene = name)
 
 write_tsv(goi, file = "8.go/goi.txt", col_names = FALSE)
+
+#### Chi-Squared Tests ####
+# Do the number of genes we see in each category match what we would expect by random chance?
+# Null Hypothesis: There is no association between methylation and genetic divergence
+catCounts <- sigTrans |>
+  count(type) |>
+  rbind(list("DMR-Diverged",0),
+        list("DMR-Conserved",0)) |>
+  mutate(out = 1358 - n)
+
+# Run chi-squared for DMR-diverged category
+dmrDiv <- as.table(rbind(c(0, 24), c(21, 1313)))
+chisq.test(dmrDiv)
+# X-squared = 2.828e-26, df = 1, p-value = 1
+
+ftDiv <- matrix(c(0, 24, 21, 1313),
+             nrow = 2,
+             dimnames = list(Diverged = c("yes", "no"),
+                             DMR = c("yes", "no"))) |>
+  fisher.test() # one sided bc can't be lower than 0
+# odds ratio = 0, p-value = 1
+
+
+# Run chi-squared for DMR-conserved category
+# Null Hypothesis: There is no association between methylation divergence and genetic conservation
+
+dmrCon <- as.table(rbind(c(0, 24), c(34, 1300)))
+chisq.test(dmrCon)
+# X-squared = 0.018, df = 1, p-value = 0.894
+
+ftCon <- matrix(c(0, 24, 34, 1300),
+             nrow = 2,
+             dimnames = list(Diverged = c("yes", "no"),
+                             DMR = c("yes", "no"))) |>
+  fisher.test() # one sided bc can't be lower than 0
+# odds ratio = 0, p-value = 1
+
+#' In both cases we fail to reject the null hypothesis. This is in line with our
+#' surprising conclusion that there is no relationship between genetic differentiation
+#' between populations and methylation divergence.

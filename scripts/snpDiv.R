@@ -27,10 +27,10 @@ divProc <- function(pop){
 
 div <- map(.x = c("es", "ef", "et", "ew"), .f = divProc) |> list_rbind()
 
-# Remove NAs
+# Change NAs to 0
 div <- div |>
-  filter(!is.na(TajimaD),
-         !is.na(PI))
+  mutate(TajimaD = replace_na(TajimaD, 0),
+         PI = replace_na(PI, 0))
 
 # Sum number of populations represented in each window
 divPops <- div |>
@@ -40,9 +40,7 @@ divPops <- div |>
 
 # Merge back and only keep windows with all four pops
 divfilt <- merge(divPops, div, by.x = c("CHROM", "BIN_START")) |>
-  arrange(CHROM, BIN_START, population) |>
-  filter(!is.na(TajimaD),
-         !is.na(PI))
+  arrange(CHROM, BIN_START, population)
 
 # Make sure every window has 4 populations
 unique(divfilt$npops)
@@ -57,11 +55,33 @@ library(glmmTMB)
 library(DHARMa)
 library(broom)
 
+# How many windows?
+divfilt |>
+  select(CHROM, BIN_START, PI, population) |>
+  pivot_wider(names_from = population,
+              values_from = PI) |>
+  nrow()
 
-# PI Diversity
+# Chart distribution
+divfilt |>
+  filter(PI < 0.0001) |>
+  ggplot(mapping = aes(x = PI)) +
+  geom_histogram() +
+  facet_wrap(vars(population))
+
+# Summarize PI Diversity
+divfilt |>
+  group_by(population) |>
+  summarize(m = mean(PI),
+            max = max(PI),
+            min = min(PI),
+            sd = sd(PI),
+            dens = mean(N_SNPS/1000))
+
+# Build gamma model- no need for zero inflation, pretty normal amount of 0s
 piglm <- glm(data = divfilt,
-               PI ~ population,
-               family = Gamma)
+             PI ~ population,
+      family = Gamma)
 
 #check_model(methglm) # Looks lovely
 check_predictions(piglm)
@@ -75,7 +95,15 @@ piEM <- emmeans(piglm, specs = ~population) |>
 piEM |> plot() +
   geom_vline(xintercept = 0, color = 'red', lty = 2)
 
+
+
 # Tajima's D
+divfilt |>
+  ggplot(mapping = aes(x = TajimaD)) +
+  geom_histogram() +
+  facet_wrap(vars(population))
+
+# Fit normal distribution lm
 dlm <- lm(data = divfilt,
            TajimaD ~ population)
 

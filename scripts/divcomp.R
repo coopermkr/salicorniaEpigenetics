@@ -13,12 +13,13 @@ snpDiv <- read_tsv("6.diversity/snpDiversity.tsv") |>
   rename(chrom = CHROM,
          window = BIN_START,
          pop = population)
+
 smpDiv <- read_tsv("6.diversity/smpDiversity.tsv") |>
   rename(methSD = sd,
          methMean = mean)
 
 # Join the tables and keep only windows we have info for
-div <- merge(snpDiv, smpDiv)
+div <- merge(snpDiv, smpDiv, by = c("chrom", "window", "pop"))
 
 #### Test if genetic diversity predicts methylation diversity
 # Make histograms of distributions
@@ -34,7 +35,14 @@ ggplot(data = div,
 
 
 cor.test(x = div$PI, y = div$methSD, method = "spearman")
-#rho = -0.016, p = 0.1838
+#rho = 0.1442, p = 2.2e-16
+
+# Test again without zero inflation
+divfilt <- div |>
+  filter(PI > 0, methSD > 0)
+
+cor.test(x = divfilt$PI, y = divfilt$methSD, method = "spearman")
+#rho = -0.025, p = 0.04
 
 # Again with a gamma
 
@@ -44,11 +52,11 @@ piMeth <- div |>
          across(pop, str_replace, "es", "Savin Hill Cove"),
          across(pop, str_replace, "ew", "Waquoit Bay"),
          across(pop, str_replace, "et", "The Creeks")) |>
-  filter(methSD > 0) |>
+  #filter(methSD > 0) |>
   ggplot(mapping = aes(x = PI,
                        y = methSD, color = pop)) +
-    scale_y_continuous(trans = 'log10') +
-    scale_x_continuous(trans = 'log10') +
+    #scale_y_continuous(trans = 'log10') +
+    #scale_x_continuous(trans = 'log10') +
     geom_point() +
     facet_wrap(vars(pop)) +
     theme_classic() +
@@ -67,10 +75,10 @@ dev.off()
 
 # Again with D
 div |>
-  filter(methSD > 0) |>
+  #filter(methSD > 0) |>
   ggplot(mapping = aes(x = TajimaD,
                        y = methSD, color = pop)) +
-  scale_y_continuous(trans = 'log10') +
+  #scale_y_continuous(trans = 'log10') +
   geom_point() +
   facet_wrap(vars(pop)) +
   theme_classic()
