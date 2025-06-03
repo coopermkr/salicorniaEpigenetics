@@ -13,13 +13,36 @@ meanFst <- read_csv("6.fst/meanfst.csv")
 
 kw <- read_csv(file = "6.dma/kw.csv")
 
+# Turn Tajima's D into measure of divergence
+tajima <- read_tsv("6.diversity/snpDiversity.tsv") |>
+  filter(npops == 4) |>
+  select(CHROM, BIN_START, TajimaD, population) |>
+  group_by(CHROM, BIN_START) |>
+  pivot_wider(names_from = population,
+              values_from = TajimaD) |>
+  rename(chrom = CHROM,
+         window = BIN_START)
+
+# Calculate Z-score correction values
+tajCorr <- tajima |>
+  ungroup() |>
+  summarize(efCor = mean(ef),
+            esCor = mean(es),
+            etCor = mean(et),
+            ewCor = mean(ew))
+
+# Z-transform each value and take the mean
+Ztajima <- tajima |>
+  mutate(ZD_mean = ((ef-tajCorr$efCor)+(es-tajCorr$esCor)+(et-tajCorr$etCor)+(ew-tajCorr$ewCor))/4) |>
+  select(chrom, window, ZD_mean)
+
 # Filter out NAs and merge with SNP set
 outcombo <- kw |>
   mutate(significance = -log10(p) > 1.3) |>
   merge(meanFst)
 
 # Plot p vs. Fst
-vol <- ggplot(data = outcombo,
+Fvol <- ggplot(data = outcombo,
        mapping = aes(x = ZFst_mean,
                      y = -log10(p))) +
   geom_point() +
@@ -39,7 +62,36 @@ vol <- ggplot(data = outcombo,
         panel.grid.minor.x = element_blank())
 
 png("6.dma/volcano.png", width = 800, height = 600)
-vol
+Fvol
+dev.off()
+
+# P vs. Tajima D
+outcombo <- kw |>
+  mutate(significance = -log10(p) > 1.3) |>
+  merge(Ztajima)
+
+# Plot p vs. Fst
+Dvol <- ggplot(data = outcombo,
+              mapping = aes(x = ZD_mean,
+                            y = -log10(p))) +
+  geom_point() +
+  geom_vline(xintercept = 2.5*sd(outcombo$ZD_mean), linetype = "dashed") +
+  geom_vline(xintercept = -2.5*sd(outcombo$ZD_mean), linetype = "dashed") +
+  geom_hline(yintercept = 1.3, linetype = "dashed") +
+  theme_classic() +
+  labs(title = "Window-by-window Divergence",
+       x = "Genetic Divergence (Z-transformed Mean Tajima's D)",
+       y = "Divergence in Methylation Density (-log10(p))") +
+  guides (size = "none") +
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "none",
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+png("6.dma/volcano.png", width = 800, height = 600)
+Dvol
 dev.off()
 
 
@@ -74,10 +126,7 @@ genes <- fread("7.transcripts/gene.features.bed") |>
          strand = V6,
          thicks = V7,
          thicke = V8,
-         rgb = V9,
-         bcount = V10,
-         bsizes = V11,
-         bstart = V12)
+         rgb = V9)
 
 siganno <- function(chr, win, type) {
   winstart <- win - 10000
