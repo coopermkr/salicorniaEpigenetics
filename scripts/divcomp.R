@@ -55,21 +55,21 @@ piMeth <- div |>
   #filter(methSD > 0) |>
   ggplot(mapping = aes(x = PI,
                        y = methSD, color = pop)) +
-    #scale_y_continuous(trans = 'log10') +
-    #scale_x_continuous(trans = 'log10') +
+    scale_y_continuous(trans = 'log10') +
+    scale_x_continuous(trans = 'log10') +
     geom_point() +
     facet_wrap(vars(pop)) +
-    theme_classic() +
-    labs(title = "Window-by-window diversity comparison",
-       x = "Methylation diversity (standard deviation of density over 10kb window)",
-       y = "Genetic diversity (Pi over 10kb window)") +
+    theme_classic(base_size = 16) +
+    labs(title = "Standard Window Diversity Comparison",
+       x = "Methylation Diversity (Density Deviation over 10kb Window)",
+       y = "Genetic Diversity (Pi over 10kb Window)") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-png("6.diversity/piMeth.png", width = 800, height = 600)
+png("report/piMeth.png", width = 800, height = 600)
 piMeth
 dev.off()
 

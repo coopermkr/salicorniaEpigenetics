@@ -120,9 +120,10 @@ plotFst <- ggplot(data = manFst,
                                shape = significance)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
-  labs(title = "Genetic Divergence by Population",
+  labs(title = "Genetic Divergence",
        x = "10kb Window Position",
-       y = "Z-Transformed Mean of Pairwise Fst") +
+       y = "Z-Transformed Mean of Pairwise Fst",
+       tag = "(A)") +
   scale_x_continuous(label = unique(manFst$chrom),
                      breaks = unique(manFst$offset)) +
   geom_hline(yintercept = 2.5*sd(manFst$ZFst_mean), linetype = "dashed") +
@@ -139,6 +140,15 @@ plotFst <- ggplot(data = manFst,
 png("6.fst/manhattanFst.png", width = 600, height = 400)
 plotFst
 dev.off()
+
+# Combine with Manhattan object
+library(grid)
+library(gridExtra)
+
+jpeg(filename = "results/manhattans.jpg", width = 800, height = 1000, quality = 100)
+grid.arrange(plotFst, manhattan, ncol = 1)
+dev.off()
+
 
 #### vcftools derived Fst
 fst <- read_tsv("6.fst/winfst.weir.fst") |>

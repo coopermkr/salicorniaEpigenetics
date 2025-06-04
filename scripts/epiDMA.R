@@ -88,8 +88,8 @@ manhattan <- ggplot(data = man,
   geom_point(size = 3) +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
   theme_classic(base_size = 15) +
-  labs(title = "Methylation Divergence by Population",
-       x = "10kb Methylation Window Position",
+  labs(title = "Methylation Divergence", tag = "(B)",
+       x = "10kb Window Position",
        y = "Kruskal Wallis of Methylation Density (-log10(p))") +
   scale_x_continuous(label = unique(man$chrom),
                      breaks = unique(man$offset)) +

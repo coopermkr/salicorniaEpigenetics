@@ -77,7 +77,9 @@ methBox <- methDev |>
        x = "Population",
        y = "Standard Deviation of Methylation Density over 10kb Windows") +
   guides (size = "none") +
-  theme_classic(base_size = 16)
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5))
+
 
 png("6.diversity/methBox.png", width = 600, height = 800)
 methBox

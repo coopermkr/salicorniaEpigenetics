@@ -138,30 +138,6 @@ piVio <- divfilt |>
   guides (size = "none") +
   theme_classic(base_size = 16)
 
-# Boxplot Pi diversity
-piBox <- divfilt |>
-  ggplot(mapping = aes(x = population, y = PI, color = population)) +
-  geom_point(position = position_jitter(width = .3, seed = 10), size = 1, alpha = 0.01) +
-  geom_boxplot(fill = NA, linewidth = 1) +
-  
-  # Put it on a log scale so you can actually see the lower end
-  scale_y_continuous(trans = 'log10') +
-  
-  # Make it pretty
-  scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
-                                "The Creeks Preserve", "Waquoit Bay"),
-                     values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
-  labs(title = "Pi Diversity over 10kb Windows",
-       x = "Population",
-       y = "Pi over 10kb window") +
-  guides (size = "none") +
-  theme_classic(base_size = 16)
-
-png("6.diversity/piBox.png", width = 600, height = 800)
-piBox
-dev.off()
-
-
 # Plot Tajima violin plot
 dvio <- divfilt |>
   ggplot(mapping = aes(x = population, y = TajimaD, color = population)) +
@@ -198,4 +174,72 @@ dbox <- divfilt |>
 png("5.diversity/tajdBox.png", width = 600, height = 800)
 dbox
 dev.off()
+
+
+# Boxplot Pi diversity
+piBox <- divfilt |>
+  mutate(Population = str_replace_all(population,
+                                      c("ef" = "Folger's\nMarsh",
+                                        "es" = "Savin Hill\nCove",
+                                        "et" = "The Creeks\nPreserve",
+                                        "ew" = "Waquoit\nBay"))) |>
+  ggplot(mapping = aes(x = Population, y = PI, color = Population)) +
+  geom_point(position = position_jitter(width = .3, seed = 10), size = 1, alpha = 0.01) +
+  geom_boxplot(fill = NA, linewidth = 1) +
+  
+  # Put it on a log scale so you can actually see the lower end
+  scale_y_continuous(trans = 'log10') +
+  
+  # Make it pretty
+  scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
+                                "The Creeks Preserve", "Waquoit Bay"),
+                     values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
+  labs(title = "Genetic Diversity",
+       x = "Population",
+       y = "Pi over 10kb Windows",
+       tag = "(A)") +
+  guides (size = "none", color = "none") +
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot methylation diversity the same way:
+methDev <- read_tsv("6.diversity/smpDiversity.tsv")
+
+methBox <- methDev |>
+  mutate(Population = str_replace_all(pop,
+                                      c("ef" = "Folger's\nMarsh",
+                                        "es" = "Savin Hill\nCove",
+                                        "et" = "The Creeks\nPreserve",
+                                        "ew" = "Waquoit\nBay"))) |>
+  # Filter out super high standard devs
+  #filter(sd < 0.3) |>
+  
+  # Plot sd by population
+  ggplot(mapping = aes(x = Population, y = sd, color = Population)) +
+  geom_point(position = position_jitter(width = .3, seed = 10), size = 1, alpha = 0.05) +
+  geom_boxplot(fill = NA, linewidth = 1) +
+  
+  # Put it on a log scale so you can actually see the lower end
+  scale_y_continuous(trans = 'log10') +
+  
+  # Make it pretty
+  scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
+                                "The Creeks Preserve", "Waquoit Bay"),
+                     values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
+  
+  labs(title = "Methylation Diversity",
+       x = "Population",
+       y = "Density Deviation over 10kb Windows",
+       tag = "(B)") +
+  guides (size = "none", color = "none") +
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+library(grid)
+library(gridExtra)
+
+jpeg(filename = "report/diversityBoxes.jpg", width = 800, height = 600, quality = 100)
+grid.arrange(piBox, methBox, ncol = 2)
+dev.off()
+
 
