@@ -72,24 +72,30 @@ ggplot(data = categories,
 # No divergence
 noDiv <- categories |>
   filter(cat == "No Divergence") |>
-  ggplot(mapping = aes(x = counts)) +
+  ggplot(mapping = aes(x = counts, color = cat, fill = cat)) +
   geom_histogram() +
   theme_classic() +
   labs(title = "No Divergence", tag = "(A)") +
   labs(x = "Number of Windows",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "grey") +
+  scale_fill_manual(values = "grey") +
+  guides (color = "none", fill = "none")
 
 # Genetic Divergence
 genDiv <- categories |>
   filter(cat == "Genetic Divergence") |>
-  ggplot(mapping = aes(x = counts)) +
+  ggplot(mapping = aes(x = counts, color = cat, fill = cat)) +
   geom_histogram() +
   theme_classic() +
   labs(title = "Genetic Divergence", tag = "(B)") +
   labs(x = "Number of Windows",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "steelblue") +
+  scale_fill_manual(values = "steelblue") +
+  guides (color = "none", fill = "none")
 
 # Genetic Conservation
 genCon <- categories |>
@@ -105,13 +111,16 @@ genCon <- categories |>
 # Methylation Divergence
 methDiv <- categories |>
   filter(cat == "Methylation Divergence") |>
-  ggplot(mapping = aes(x = counts)) +
+  ggplot(mapping = aes(x = counts, color = cat, fill = cat)) +
   geom_histogram() +
   theme_classic() +
-  labs(title = "Methylation Divergence", tag = "(D)") +
+  labs(title = "Methylation Divergence", tag = "(C)") +
   labs(x = "Number of Windows",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "maroon") +
+  scale_fill_manual(values = "maroon") +
+  guides (color = "none", fill = "none")
 
 # Methylation Divergence/Genetic Conservation
 mDgC <- categories |>
@@ -127,19 +136,24 @@ mDgC <- categories |>
 # Methylation Divergence/Genetic Divergence
 mDgD <- categories |>
   filter(cat == "Methylation Divergence/Genetic Divergence") |>
-  ggplot(mapping = aes(x = counts)) +
+  ggplot(mapping = aes(x = counts, color = "cat", fill = "cat")) +
   geom_histogram() +
   theme_classic() +
-  labs(title = "Methylation Divergence/Genetic Divergence", tag = "(F)") +
+  labs(title = "Methylation Divergence\nand Genetic Divergence", tag = "(D)") +
   labs(x = "Number of Windows",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "#7b598a") +
+  scale_fill_manual(values = "#7b598a") +
+  guides (color = "none", fill = "none")
 
 # Make a combo plot
-grid.arrange(noDiv, genDiv, genCon, methDiv, mDgC, mDgD, ncol = 3, 
+png("report/bootCats.png", width = 800, height = 600)
+grid.arrange(noDiv, genDiv, methDiv, mDgD, ncol = 2, 
              top=textGrob("Category Distributions",
                           gp=gpar(fontsize = 20),
                           just = "centre"))
+dev.off()
 
 # So this plot isn't very informative, but what might be more interesting is the
 # distribution of the p values and Fst values themselves without assigning them
@@ -152,9 +166,9 @@ distribLong <- joined |>
 
 # Filter out the zeros since they're so over-represented
 distribLong |>
-  filter(test != 0) |>
+  filter(Significance != 0) |>
   # make a histogram
-  ggplot(mapping = aes(x = test)) +
+  ggplot(mapping = aes(x = Significance)) +
   geom_histogram() +
   facet_wrap(vars(type)) +
   theme_classic()
@@ -163,30 +177,38 @@ distribLong |>
 # Methylation divergence histogram
 methyl <- distribLong |>
   filter(type == "p",
-         test != 0) |>
+         Significance != 0) |>
   # Make methylation plot
-  ggplot(mapping = aes(x = test)) +
+  ggplot(mapping = aes(x = Significance, color = type, fill = type)) +
   geom_histogram() +
-  theme_classic() +
-  labs(title = "Methylation Divergence", tag = "(A)") +
-  labs(x = "KW P-Value",
+  theme_classic(base_size = 16) +
+  labs(title = "Methylation Divergence", tag = "(B)") +
+  labs(x = "KW Test P-Value",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "maroon") +
+  scale_fill_manual(values = "maroon") +
+  guides (color = "none", fill = "none")
 
 # Genetic divergence histogram
 gen <- distribLong |>
   filter(type == "ZFst_mean",
-         test != 0) |>
-  ggplot(mapping = aes(x = test)) +
+         Significance != 0) |>
+  ggplot(mapping = aes(x = Significance, color = type, fill = type)) +
   geom_histogram() +
-  theme_classic() +
-  labs(title = "Genetic Divergence", tag = "(B)") +
+  theme_classic(base_size = 16) +
+  labs(title = "Genetic Divergence", tag = "(A)") +
   labs(x = "Mean of Z-Fst",
        y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = "steelblue") +
+  scale_fill_manual(values = "steelblue") +
+  guides (color = "none", fill = "none")
 
 # Combine the two plots at subplots
-grid.arrange(methyl, gen, ncol = 2, 
+png(filename = "report/divTestDistribs.png", height = 600, width = 800)
+grid.arrange(gen, methyl, ncol = 2, 
              top=textGrob("Distribution of Divergence Tests",
                           gp=gpar(fontsize = 20),
                           just = "centre"))
+dev.off()

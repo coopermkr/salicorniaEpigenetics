@@ -38,14 +38,17 @@ Ztajima <- tajima |>
 
 # Filter out NAs and merge with SNP set
 outcombo <- kw |>
-  mutate(significance = -log10(p) > 1.3) |>
-  merge(meanFst)
+  merge(meanFst) |>
+  mutate(msig = -log10(p) > 1.3,
+         gsig = ZFst_mean > 2.5*sd(ZFst_mean),
+         cat = as.factor(paste(gsig, msig, sep = " ")))
 
 # Plot p vs. Fst
 Fvol <- ggplot(data = outcombo,
        mapping = aes(x = ZFst_mean,
-                     y = -log10(p))) +
-  geom_point() +
+                     y = -log10(p),
+                     color = cat)) +
+  geom_point(size = 3) +
   geom_vline(xintercept = 2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
   geom_vline(xintercept = -2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
@@ -53,15 +56,16 @@ Fvol <- ggplot(data = outcombo,
   labs(title = "Window-by-window Divergence",
        x = "Genetic Divergence (Z-transformed Mean Fst)",
        y = "Divergence in Methylation Density (-log10(p))") +
-  guides (size = "none") +
+  guides(size = "none", color = "none") +
   theme_classic(base_size = 16) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         legend.position = "none",
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank()) +
+  scale_color_manual(values = c("grey", "maroon", "steelblue"))
 
-png("6.dma/volcano.png", width = 800, height = 600)
+jpeg("report/divergence.png", width = 800, height = 600, quality = 100)
 Fvol
 dev.off()
 

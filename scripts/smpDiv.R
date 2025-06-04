@@ -76,7 +76,7 @@ methBox <- methDev |>
   labs(title = "Methylation Diversity",
        x = "Population",
        y = "Standard Deviation of Methylation Density over 10kb Windows") +
-  guides (size = "none") +
+  guides(size = "none") +
   theme_classic(base_size = 16) +
   theme(plot.title = element_text(hjust = 0.5))
 

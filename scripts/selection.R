@@ -145,7 +145,7 @@ dev.off()
 library(grid)
 library(gridExtra)
 
-jpeg(filename = "results/manhattans.jpg", width = 800, height = 1000, quality = 100)
+jpeg(filename = "report/manhattans.png", width = 800, height = 1000, quality = 100)
 grid.arrange(plotFst, manhattan, ncol = 1)
 dev.off()
 
