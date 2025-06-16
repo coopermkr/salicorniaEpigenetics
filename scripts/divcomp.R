@@ -57,6 +57,10 @@ piMeth <- div |>
                        y = methSD, color = pop)) +
     scale_y_continuous(trans = 'log10') +
     scale_x_continuous(trans = 'log10') +
+  # Make it pretty
+  scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
+                                "The Creeks Preserve", "Waquoit Bay"),
+                     values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
     geom_point() +
     facet_wrap(vars(pop)) +
     theme_classic(base_size = 16) +

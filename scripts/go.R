@@ -56,3 +56,6 @@ fres <- pmap(.l = both, .f = fetest) |> list_rbind() |>
 
 write_tsv(fres, "8.go/FEtest.tsv")
 
+library()
+fres <- read_tsv("8.go/FEtest.tsv")
+
