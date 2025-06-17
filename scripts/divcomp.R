@@ -52,7 +52,7 @@ piMeth <- div |>
          across(pop, str_replace, "es", "Savin Hill Cove"),
          across(pop, str_replace, "ew", "Waquoit Bay"),
          across(pop, str_replace, "et", "The Creeks")) |>
-  #filter(methSD > 0) |>
+  filter(methSD > 0) |>
   ggplot(mapping = aes(x = PI,
                        y = methSD, color = pop)) +
     scale_y_continuous(trans = 'log10') +
@@ -61,12 +61,12 @@ piMeth <- div |>
   scale_color_manual(labels = c("Folger's Marsh", "Savin Hill Cove",
                                 "The Creeks Preserve", "Waquoit Bay"),
                      values = c("#D81B60", "#1E88E5", "#FFC107", "#004D40")) +
-    geom_point() +
+    geom_point(alpha = 0.25) +
     facet_wrap(vars(pop)) +
     theme_classic(base_size = 16) +
     labs(title = "Standard Window Diversity Comparison",
-       x = "Methylation Diversity (Density Deviation over 10kb Window)",
-       y = "Genetic Diversity (Pi over 10kb Window)") +
+       y = "Methylation Diversity (Density Deviation over 10kb Window)",
+       x = "Genetic Diversity (Pi over 10kb Window)") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         legend.position = "none",

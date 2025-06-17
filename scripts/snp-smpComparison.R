@@ -63,7 +63,7 @@ Fvol <- ggplot(data = outcombo,
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
-  scale_color_manual(values = c("grey", "maroon", "steelblue"))
+  scale_color_manual(values = c("grey", "#F78C45", "#704d99"))
 
 jpeg("report/divergence.png", width = 800, height = 600, quality = 100)
 Fvol

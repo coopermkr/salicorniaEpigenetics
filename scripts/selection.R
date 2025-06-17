@@ -134,7 +134,8 @@ plotFst <- ggplot(data = manFst,
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5)) +
-  scale_colour_manual(values = rep(c("steelblue", "lightblue"), 9))
+  scale_colour_manual(values = rep(c("#704d99", "#D5CAE4"), 9))
+
 
 
 png("6.fst/manhattanFst.png", width = 600, height = 400)

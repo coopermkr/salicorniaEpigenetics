@@ -93,8 +93,8 @@ genDiv <- categories |>
   labs(x = "Number of Windows",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = "steelblue") +
-  scale_fill_manual(values = "steelblue") +
+  scale_color_manual(values = "#704D99") +
+  scale_fill_manual(values = "#704D99") +
   guides (color = "none", fill = "none")
 
 # Genetic Conservation
@@ -118,8 +118,8 @@ methDiv <- categories |>
   labs(x = "Number of Windows",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = "maroon") +
-  scale_fill_manual(values = "maroon") +
+  scale_color_manual(values = "#F78C45") +
+  scale_fill_manual(values = "#F78C45") +
   guides (color = "none", fill = "none")
 
 # Methylation Divergence/Genetic Conservation
@@ -143,8 +143,8 @@ mDgD <- categories |>
   labs(x = "Number of Windows",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = "#7b598a") +
-  scale_fill_manual(values = "#7b598a") +
+  scale_color_manual(values = "#b46d6f") +
+  scale_fill_manual(values = "#b46d6f") +
   guides (color = "none", fill = "none")
 
 # Make a combo plot
@@ -186,8 +186,8 @@ methyl <- distribLong |>
   labs(x = "KW Test P-Value",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = "maroon") +
-  scale_fill_manual(values = "maroon") +
+  scale_color_manual(values = "#F78C45") +
+  scale_fill_manual(values = "#F78C45") +
   guides (color = "none", fill = "none")
 
 # Genetic divergence histogram
@@ -201,8 +201,8 @@ gen <- distribLong |>
   labs(x = "Mean of Z-Fst",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = "steelblue") +
-  scale_fill_manual(values = "steelblue") +
+  scale_color_manual(values = "#704d99") +
+  scale_fill_manual(values = "#704d99") +
   guides (color = "none", fill = "none")
 
 # Combine the two plots at subplots

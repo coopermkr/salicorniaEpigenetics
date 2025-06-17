@@ -99,7 +99,9 @@ manhattan <- ggplot(data = man,
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 45, size = 15, vjust = 0.5)) +
-  scale_colour_manual(values = rep(c("maroon", "#DD80A3"), 9))
+  #scale_colour_manual(values = rep(c("maroon", "#DD80A3"), 9))
+  scale_colour_manual(values = rep(c("#F78C45", "#F6C7A7"), 9))
+
 
 
 
