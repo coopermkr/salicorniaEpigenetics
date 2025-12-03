@@ -51,7 +51,7 @@ kwtest <- function(grp) {
 
 kw <- map(.x = unique(methdens$grp), .f = kwtest) |> list_rbind()
 
-kw <- read_csv(file = "6.dma/kw.csv") |>
+kw <- read_csv(file = "6.dma/kw_exon.csv") |>
   arrange(chrom)
 
 # Filter out NAs
@@ -76,7 +76,7 @@ sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt",
 
 man <- kw |>
   merge(sizes) |>
-  mutate(xcoord = window + offset,
+  mutate(xcoord = feat + offset,
          significance = p < 0.05)
 
 # Plot windows by position and pvalue to make a manhattan plot

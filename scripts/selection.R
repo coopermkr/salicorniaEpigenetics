@@ -86,6 +86,7 @@ meanFst |>
 meanFst <- read_csv("6.fst/meanfst.csv") |>
   arrange(chrom)
 
+
 # plot mean Fst values
 ggplot(data = meanFst,
        mapping = aes(x = ZFst_mean)) +
@@ -151,10 +152,10 @@ grid.arrange(plotFst, manhattan, ncol = 1)
 dev.off()
 
 
-#### vcftools derived Fst
-fst <- read_tsv("6.fst/winfst.weir.fst") |>
-  filter(WEIGHTED_FST >= 0)
+#### vcftools-derived SNP Fst
+fst <- read_tsv("6.fst/sitefst.tsv.weir.fst") |>
+  filter(WEIR_AND_COCKERHAM_FST > 0)
 
-ggplot(data = fst, mapping = aes(x = WEIGHTED_FST)) +
+ggplot(data = fst, mapping = aes(x = WEIR_AND_COCKERHAM_FST)) +
   geom_histogram()
 
