@@ -17,7 +17,7 @@ library(ggrepel)
 mass <- st_read("mapping/outline25k/OUTLINE25K_ARC.shp")
 
 
-# Convert coords to lat long and filter out western MA
+# Convert coords to lat long
 mass <- st_transform(mass, 4326)
 
 massMap <- ggplot(data = mass) +
@@ -40,18 +40,21 @@ png(filename = "report/sampleMap.png", width = 600, height = 400)
 siteMap
 dev.off()
 
-#### Create inset metals plot
-metals <- read_csv("data/xrf_soil_data_intensity_concentration.csv")
+#### Create inset N plot
+## First figure out which monitoring stations are closest to the sites
+usgsMonitors <- read_csv("mapping/station/station.csv") |> # EPA/USGS database
+  select(MonitoringLocationIdentifier, MonitoringLocationTypeName, HUCEightDigitCode,
+         LatitudeMeasure, LongitudeMeasure) # Could work for Waquoit
 
-# Filter and rename sites
-metFilt <- metals |>
-  filter(element == "Pb",
-         site %in% c("FM", "WB", "SHC", "TC")) |>
-  mutate(site = str_replace_all(site,
-                                      c("FM" = "Folger's\nMarsh",
-                                        "SHC" = "Savin Hill\nCove",
-                                        "TC" = "The Creeks\nPreserve",
-                                        "WB" = "Waquoit\nBay")))
+# DEP database
+depMonitors <- st_read("mapping/dwmwpp_water_quality_sta/DWMWPP_WATER_QUALITY_STATIONS.shp")
+depMonitors <- st_transform(depMonitors, 4326)
+
+massMap + geom_sf(data = depMonitors, color = "darkgrey")
+
+
+massMap +
+  geom_point(data = monitors, aes(x = LongitudeMeasure, y = LatitudeMeasure))
 
 # Order factor to change boxplot series
 metFilt$site <- factor(metFilt$site, levels = c("Folger's\nMarsh", "The Creeks\nPreserve",
