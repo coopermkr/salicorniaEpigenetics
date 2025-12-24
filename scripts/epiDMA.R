@@ -51,7 +51,7 @@ kwtest <- function(grp) {
 
 kw <- map(.x = unique(methdens$grp), .f = kwtest) |> list_rbind()
 
-kw <- read_csv(file = "6.dma/kw_exon.csv") |>
+kw <- read_csv(file = "6.dma/kw_detectedTrans.csv") |>
   arrange(chrom)
 
 # Filter out NAs
@@ -103,9 +103,7 @@ manhattan <- ggplot(data = man,
   scale_colour_manual(values = rep(c("#F78C45", "#F6C7A7"), 9))
 
 
-
-
-png("6.dma/manhattanMeth.png", width = 600, height = 400)
+png("6.dma/manhattanTransMeth.png", width = 600, height = 400)
 manhattan
 dev.off()
 

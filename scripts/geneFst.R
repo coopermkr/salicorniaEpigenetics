@@ -39,6 +39,8 @@ locFst <- as.data.frame(snpfst$perloc) |>
 
 write_tsv(locFst, file = "4.filter/snpfst.tsv")
 
+locFst <- read_csv("6.fst/locusFst.csv")
+
 # Load Nitrogen differential genes
 anno <- read_tsv("7.transcripts/shootTreatment.tsv", col_names = TRUE) |>
   rename("chrom" = Chr,

@@ -83,19 +83,23 @@ meanFst |>
   select(chrom, window, sites, ZFst_mean) |>
   write_csv("6.fst/meanfst.csv")
 
-meanFst <- read_csv("6.fst/meanfst.csv") |>
-  arrange(chrom)
+meanFst <- read_csv("6.fst/transFst.csv") |>
+  arrange(chrom) |>
+  mutate(aveFst = case_when(aveFst < 0 ~ 0, TRUE ~ aveFst),
+         nSNP = replace_na(nSNP, 0)) |>
+  filter(!is.na(aveFst))
 
+mean(meanFst$aveFst)
 
 # plot mean Fst values
 ggplot(data = meanFst,
-       mapping = aes(x = ZFst_mean)) +
+       mapping = aes(x = aveFst)) +
   geom_histogram(binwidth = 0.01) +
-  geom_vline(xintercept = 3*sd(meanFst$ZFst_mean))
+  geom_vline(xintercept = mean(meanFst$aveFst) + 3*sd(meanFst$aveFst))
 
-# Pull out top 1% of Fst value windows
+ # Pull out top 1% of Fst value windows
 outFst <- meanFst |>
-  filter(ZFst_mean >= 3*sd(meanFst$ZFst_mean))
+  filter(aveFst >= mean(meanFst$aveFst) + 3*sd(meanFst$aveFst))
 
 write_csv(outFst, file = "6.fst/outlierFst.csv")
 
@@ -109,21 +113,20 @@ sizes <- read_delim(file = "data/sizes.tetra.scaff.18.txt",
 
 manFst <- meanFst |>
   merge(sizes) |>
-  mutate(xcoord = window + offset,
-         significance = ZFst_mean > 2.5*sd(meanFst$ZFst_mean) | 
-           ZFst_mean < -2.5*sd(meanFst$ZFst_mean))
+  mutate(xcoord = feat + offset,
+         significance = aveFst > mean(meanFst$aveFst) + 3*sd(meanFst$aveFst))
 
 # Plot
 plotFst <- ggplot(data = manFst,
                  mapping = aes(x = xcoord,
-                               y = ZFst_mean,
+                               y = aveFst,
                                color = as.factor(chrom),
                                shape = significance)) +
   geom_point(size = 3) +
   theme_classic(base_size = 15) +
   labs(title = "Genetic Divergence",
-       x = "10kb Window Position",
-       y = "Z-Transformed Mean of Pairwise Fst",
+       x = "Transcript Start Position",
+       y = "Gene Body Average of Pairwise Fst",
        tag = "(A)") +
   scale_x_continuous(label = unique(manFst$chrom),
                      breaks = unique(manFst$offset)) +

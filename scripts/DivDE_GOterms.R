@@ -63,7 +63,7 @@ jpeg(filename = "8.go/processOverlap", width = 600, height = 600, quality = 100)
 goVennPlot
 dev.off()
 
-# Is the overlap significant?
+# Is the overlap significant?- This is a bad test because we're limited to 12 genes. Now all pathways can be covered
 fe <- matrix(c(7, 87, 65, 24994),
              nrow = 2,
              dimnames = list(Marsh = c("Sig", "Insig"),

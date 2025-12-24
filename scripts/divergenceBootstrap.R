@@ -13,52 +13,50 @@ library(gridExtra)
 library(grid)
 
 # Load in real data
-meanFst <- read_csv("6.fst/meanfst.csv")
+fst <- read_csv("6.fst/transFst.csv") |>
+  filter(!is.na(aveFst)) |>
+  mutate(aveFst = case_when(aveFst < 0 ~ 0, TRUE ~ aveFst))
 
-kw <- read_csv(file = "6.dma/kw.csv")
+kw <- read_csv("6.dma/kw_detectedTrans.csv")
 
-joined <- full_join(kw, meanFst) |>
-  mutate(p = replace_na(p, 0),
-         ZFst_mean = replace_na(ZFst_mean, 0),
-         sites = replace_na(sites, 0))
-
-# Calculate divergence and conservation cutoff
-sd(joined$ZFst_mean) # This is 0.02, so use that for the sd number
+combo <- merge(fst, kw, all.y = TRUE) |> # All rows should have a kw reading, but now all kw rows will have SNPs
+  mutate(p = replace_na(p, 1)) |>
+  filter(!is.na(aveFst)) |>
+  mutate(msig = p < 0.05,
+         gsig = aveFst > mean(fst$aveFst) + 3*sd(fst$aveFst),
+         cat = paste(msig, gsig))
 
 # Write function to randomly sample each dataset, combine, and count the categories.
 divBoot <- function(n, i) {
-  fstSub <- sample_n(joined, size = n, replace = FALSE) |>
-    select(ZFst_mean)
+  fstSub <- sample_n(combo, size = n, replace = FALSE) |>
+    select(aveFst)
 
-  kwSub <- sample_n(joined, size = n, replace = FALSE) |>
+  kwSub <- sample_n(combo, size = n, replace = FALSE) |>
     select(p)
   
   cbind(fstSub, kwSub) |>
     mutate(methSig = p < 0.05,
-           genDiv = ZFst_mean > 2.5*sd(meanFst$ZFst_mean),
-           genCon = ZFst_mean < -2.5*sd(meanFst$ZFst_mean),
+           genDiv = aveFst > mean(fst$aveFst) + 3*sd(fst$aveFst),
            boot = i) |>
-    group_by(methSig, genDiv, genCon, boot) |>
+    group_by(methSig, genDiv, boot) |>
     summarize(counts = n())
 }
 
-# Set number of subsampled rows to 100 and repeat the bootstrap 1000 times
+# Set number of subsampled rows to 3500 and repeat the bootstrap 1000 times
 bootOut <- map2_df(.x = 3500, .y = 1:1000, .f = divBoot)
 
 # Resummarize the results across the bootstraps
 bootOut |>
-  group_by(methSig, genDiv, genCon) |>
+  group_by(methSig, genDiv) |>
   summarize(m = mean(counts),
             sdev = sd(counts))
 
 categories <- bootOut |>
-  mutate(cat = paste(methSig, genDiv, genCon)) |>
-  mutate(cat = str_replace_all(cat, c("FALSE FALSE FALSE" = "No Divergence",  
-                    "FALSE FALSE TRUE" = "Genetic Conservation", 
-                    "FALSE TRUE FALSE" = "Genetic Divergence",
-                    "TRUE FALSE FALSE" = "Methylation Divergence", 
-                    "TRUE FALSE TRUE" = "Methylation Divergence/Genetic Conservation",
-                    "TRUE TRUE FALSE" = "Methylation Divergence/Genetic Divergence")))
+  mutate(cat = paste(methSig, genDiv)) |>
+  mutate(cat = str_replace_all(cat, c("FALSE FALSE" = "No Divergence",  
+                    "FALSE TRUE" = "Genetic Divergence",
+                    "TRUE FALSE" = "Methylation Divergence", 
+                    "TRUE TRUE" = "Methylation Divergence/Genetic Divergence")))
 
 # Plot the categories
 ggplot(data = categories,
@@ -76,7 +74,7 @@ noDiv <- categories |>
   geom_histogram() +
   theme_classic() +
   labs(title = "No Divergence", tag = "(A)") +
-  labs(x = "Number of Windows",
+  labs(x = "Number of Transcripts",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = "grey") +
@@ -90,7 +88,7 @@ genDiv <- categories |>
   geom_histogram() +
   theme_classic() +
   labs(title = "Genetic Divergence", tag = "(B)") +
-  labs(x = "Number of Windows",
+  labs(x = "Number of Transcripts",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = "#704D99") +
@@ -98,15 +96,15 @@ genDiv <- categories |>
   guides (color = "none", fill = "none")
 
 # Genetic Conservation
-genCon <- categories |>
-  filter(cat == "Genetic Conservation") |>
-  ggplot(mapping = aes(x = counts)) +
-  geom_histogram() +
-  theme_classic() +
-  labs(title = "Genetic Conservation", tag = "(C)") +
-  labs(x = "Number of Windows",
-       y = "Frequency") +
-  theme(plot.title = element_text(hjust = 0.5))
+# genCon <- categories |>
+#   filter(cat == "Genetic Conservation") |>
+#   ggplot(mapping = aes(x = counts)) +
+#   geom_histogram() +
+#   theme_classic() +
+#   labs(title = "Genetic Conservation", tag = "(C)") +
+#   labs(x = "Number of Transcripts",
+#        y = "Frequency") +
+#   theme(plot.title = element_text(hjust = 0.5))
 
 # Methylation Divergence
 methDiv <- categories |>
@@ -115,7 +113,7 @@ methDiv <- categories |>
   geom_histogram() +
   theme_classic() +
   labs(title = "Methylation Divergence", tag = "(C)") +
-  labs(x = "Number of Windows",
+  labs(x = "Number of Transcripts",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = "#F78C45") +
@@ -129,7 +127,7 @@ mDgC <- categories |>
   geom_histogram() +
   theme_classic() +
   labs(title = "Methylation Divergence/Genetic Conservation", tag = "(E)") +
-  labs(x = "Number of Windows",
+  labs(x = "Number of Transcripts",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -140,15 +138,16 @@ mDgD <- categories |>
   geom_histogram() +
   theme_classic() +
   labs(title = "Methylation Divergence\nand Genetic Divergence", tag = "(D)") +
-  labs(x = "Number of Windows",
+  labs(x = "Number of Transcripts",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = "#b46d6f") +
   scale_fill_manual(values = "#b46d6f") +
-  guides (color = "none", fill = "none")
+  guides (color = "none", fill = "none") +
+  coord_cartesian(xlim = c(0, 2))
 
 # Make a combo plot
-png("report/bootCats.png", width = 800, height = 600)
+png("revision/bootCats.png", width = 800, height = 600)
 grid.arrange(noDiv, genDiv, methDiv, mDgD, ncol = 2, 
              top=textGrob("Category Distributions",
                           gp=gpar(fontsize = 20),
@@ -158,11 +157,11 @@ dev.off()
 # So this plot isn't very informative, but what might be more interesting is the
 # distribution of the p values and Fst values themselves without assigning them
 # to categories
-distribLong <- joined |>
-  select(p, ZFst_mean) |>
+distribLong <- combo |>
+  select(p, aveFst) |>
   pivot_longer(names_to = "type",
                values_to = "Significance",
-               cols = c(p, ZFst_mean))
+               cols = c(p, aveFst))
 
 # Filter out the zeros since they're so over-represented
 distribLong |>
@@ -192,13 +191,13 @@ methyl <- distribLong |>
 
 # Genetic divergence histogram
 gen <- distribLong |>
-  filter(type == "ZFst_mean",
+  filter(type == "aveFst",
          Significance != 0) |>
   ggplot(mapping = aes(x = Significance, color = type, fill = type)) +
   geom_histogram() +
   theme_classic(base_size = 16) +
   labs(title = "Genetic Divergence", tag = "(A)") +
-  labs(x = "Mean of Z-Fst",
+  labs(x = "Transcript Ave. Fst",
        y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = "#704d99") +
@@ -206,7 +205,7 @@ gen <- distribLong |>
   guides (color = "none", fill = "none")
 
 # Combine the two plots at subplots
-png(filename = "report/divTestDistribs.png", height = 600, width = 800)
+png(filename = "revision/divTestDistribs.png", height = 600, width = 800)
 grid.arrange(gen, methyl, ncol = 2, 
              top=textGrob("Distribution of Divergence Tests",
                           gp=gpar(fontsize = 20),

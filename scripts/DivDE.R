@@ -15,7 +15,7 @@ geneFst <- read_csv("6.fst/geneFst.csv") |>
 
 nsigs <- geneFst |> filter(aveFst > 3*sd(aveFst)) |> nrow()
 
-genekw <- read_csv(file = "6.dma/kw_detectedGenes.csv") |>
+genekw <- read_csv(file = "6.dma/kw_detectedTrans.csv") |>
   filter(!is.na(p))
 
 geneDE <- read_tsv(file = "../atlas/3.edger/shootTreatment.tsv") |>
@@ -87,4 +87,18 @@ sigGenes <- topDE |>
   merge(topKw, all = TRUE, by = c("chrom", "feat")) |>
   merge(topFst, all = TRUE, by = c("chrom", "feat"))
 
+#### Independence Test
+# Do the number of genes we see in each genetic/methylation category match what we would expect by random chance?
+# Null Hypothesis: There independence between methylation and genetic divergence
+sigFst <- geneFst |> filter(aveFst > 3*sd(aveFst)) |> nrow()
 
+sigKw <- genekw |> filter(p < 0.05) |>nrow()
+
+undiv <- nrow(geneFst) + nrow(genekw) - sigFst - sigKw
+
+ftDiv <- matrix(c(0, sigFst, sigKw, undiv),
+                nrow = 2,
+                dimnames = list(FstSig = c("yes", "no"),
+                                KWSig = c("yes", "no"))) |>
+  fisher.test() # one sided bc can't be lower than 0
+# odds ratio = 0, p-value = 1
