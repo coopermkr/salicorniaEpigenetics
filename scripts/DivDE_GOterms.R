@@ -11,7 +11,7 @@ library(tidyverse)
 library(UpSetR)
 
 # Load in genetic and methylation divergent processes
-marshSet <- read_delim(file = "8.go/marshDiverGO.txt", skip = 7, col_names = FALSE) |>
+marshSet <- read_delim(file = "8.go/GOpanther_bioProc_wildMarshDG.txt", skip = 7, col_names = FALSE) |>
   rename("BiologicalProcess" = X1,
          "ArabRef" = X2,
          "marshGenes" = X3,
@@ -23,7 +23,7 @@ marshSet <- read_delim(file = "8.go/marshDiverGO.txt", skip = 7, col_names = FAL
   select(BiologicalProcess, MarshDiv, marshGenes)
 
 # Load in N experiment processes
-NSet <- read_delim(file = "8.go/allTreatDEGO.txt", skip = 7, col_names = FALSE) |>
+NSet <- read_delim(file = "8.go/GOpanther_bioProc_growthDE.txt", skip = 7, col_names = FALSE) |>
   rename("BiologicalProcess" = X1,
          "ArabRef" = X2,
          "NGenes" = X3,
@@ -59,7 +59,7 @@ goVennPlot <- ggVennDiagram(x) +
   scale_fill_gradient(low = "#F4FAFE", high = "#4981BF") +
   coord_flip()
 
-jpeg(filename = "8.go/processOverlap", width = 600, height = 600, quality = 100)
+jpeg(filename = "8.go/processOverlap.jpg", width = 600, height = 600, quality = 100)
 goVennPlot
 dev.off()
 

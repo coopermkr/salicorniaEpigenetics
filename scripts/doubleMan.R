@@ -23,16 +23,18 @@ combo <- merge(fst, kw, all.y = TRUE) |> # All rows should have a kw reading, bu
          cat = paste(msig, gsig)) |>
   select(!aveFstp)
 
+combo |> filter(gsig == TRUE)
+
 write_tsv(combo, "7.transcripts/divergenceMetrics.tsv")
 
 # Double distribution plot
 divPlot <- combo |> #filter(p < 1, aveFst > 0) |>
   ggplot(combo, mapping = aes(x = aveFst, y = -log10(p), color = cat)) + 
-  geom_point(size = 2, alpha = 0.5) +
+  geom_point(size = 3, alpha = 0.5) +
   geom_vline(xintercept = mean(fst$aveFst) + 3*sd(fst$aveFst), linetype = "dashed") +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
   theme_classic() +
-  labs(title = "Gene Body Divergence",
+  labs(title = "Transcript Body Divergence",
        x = "Genetic Divergence (Mean Fst)",
        y = "Divergence in Methylation Density (-log10(p))") +
   guides(size = "none", color = "none") +
@@ -42,7 +44,7 @@ divPlot <- combo |> #filter(p < 1, aveFst > 0) |>
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
-  scale_color_manual(values = c("grey", "#F78C45", "#704d99"))
+  scale_color_manual(values = c("grey", "#704d99", "#F78C45"))
 
 jpeg("7.transcripts/transcriptDivergence.jpg", width = 800, height = 800, quality = 100)
 divPlot
