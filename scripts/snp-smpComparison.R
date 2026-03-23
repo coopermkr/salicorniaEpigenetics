@@ -9,9 +9,11 @@ library(tidyverse)
 library(data.table)
 
 # Load genetic and methylation windows to merge
-meanFst <- read_csv("6.fst/meanfst.csv")
+#meanFst <- read_csv("6.fst/meanfst.csv")
 
-kw <- read_csv(file = "6.dma/kw.csv")
+#kw <- read_csv(file = "6.dma/kw.csv")
+
+allsigs <- read_csv(file = "8.go/allGeneSigMetrics.csv")
 
 # Turn Tajima's D into measure of divergence
 tajima <- read_tsv("6.diversity/snpDiversity.tsv") |>
@@ -43,29 +45,32 @@ outcombo <- kw |>
          gsig = ZFst_mean > 2.5*sd(ZFst_mean),
          cat = as.factor(paste(gsig, msig, sep = " ")))
 
+outcombo <- allsigs |>
+  mutate(msig = -log10(methP) > 1.3,
+         gsig = aveFst > mean(aveFst) + 3*sd(aveFst),
+         cat = as.factor(paste(gsig, msig, sep = " ")))
+
 # Plot p vs. Fst
 Fvol <- ggplot(data = outcombo,
-       mapping = aes(x = ZFst_mean,
-                     y = -log10(p),
+       mapping = aes(x = aveFst,
+                     y = -log10(methP),
                      color = cat)) +
   geom_point(size = 3) +
-  geom_vline(xintercept = 2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
-  geom_vline(xintercept = -2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
+  geom_vline(xintercept = (mean(outcombo$aveFst) + 3*sd(outcombo$aveFst)), linetype = "dashed") +
+  #geom_vline(xintercept = -2.5*sd(outcombo$ZFst_mean), linetype = "dashed") +
   geom_hline(yintercept = 1.3, linetype = "dashed") +
-  theme_classic() +
-  labs(title = "Window-by-window Divergence",
-       x = "Genetic Divergence (Z-transformed Mean Fst)",
+  labs(x = "Genetic Divergence (Mean Nei's Fst)",
        y = "Divergence in Methylation Density (-log10(p))") +
   guides(size = "none", color = "none") +
-  theme_classic(base_size = 16) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         legend.position = "none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
-  scale_color_manual(values = c("grey", "#F78C45", "#704d99"))
+  scale_color_manual(values = c("grey", "#F78C45", "#704d99")) +
+  theme_light(base_size = 16)
 
-jpeg("report/divergence.png", width = 800, height = 600, quality = 100)
+jpeg("evoApps/divergence.jpg", width = 6.5, height = 6.5, units = "in", res = 200)
 Fvol
 dev.off()
 
